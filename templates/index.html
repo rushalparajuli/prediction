@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Churn Prediction Form</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin: auto;
+        }
+        h2 {
+            text-align: center;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        label {
+            font-weight: bold;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        input,
+        select {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #218838;
+        }
+        .loading {
+            text-align: center;
+            margin-top: 20px;
+        }
+        #predictionResult {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Churn Prediction Form</h2>
+        <form id="jsonForm">
+            <div class="form-group">
+                <label for="customerID">Customer ID</label>
+                <input type="text" id="customerID" name="customerID" required />
+            </div>
+            <div class="form-group">
+                <label for="gender">Gender</label>
+                <select id="gender" name="gender">
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="SeniorCitizen">Senior Citizen</label>
+                <select id="SeniorCitizen" name="SeniorCitizen">
+                    <option value="No">No</option>
+                    <option value="Yes">Yes</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="Partner">Partner</label>
+                <select id="Partner" name="Partner">
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="Dependents">Dependents</label>
+                <select id="Dependents" name="Dependents">
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="tenure">Tenure (months)</label>
+                <input type="number" id="tenure" name="tenure" required />
+            </div>
+            <div class="form-group">
+                <label for="PhoneService">Phone Service</label>
+                <select id="PhoneService" name="PhoneService">
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="MultipleLines">Multiple Lines</label>
+                <select id="MultipleLines" name="MultipleLines">
+                    <option value="No">No</option>
+                    <option value="Yes">Yes</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="InternetService">Internet Service</label>
+                <select id="InternetService" name="InternetService">
+                    <option value="DSL">DSL</option>
+                    <option value="Fiber optic">Fiber optic</option>
+                    <option value="No">No</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="OnlineSecurity">Online Security</label>
+                <select id="OnlineSecurity" name="OnlineSecurity">
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="OnlineBackup">Online Backup</label>
+                <select id="OnlineBackup" name="OnlineBackup">
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="DeviceProtection">Device Protection</label>
+                <select id="DeviceProtection" name="DeviceProtection">
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="TechSupport">Tech Support</label>
+                <select id="TechSupport" name="TechSupport">
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="StreamingTV">Streaming TV</label>
+                <select id="StreamingTV" name="StreamingTV">
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="StreamingMovies">Streaming Movies</label>
+                <select id="StreamingMovies" name="StreamingMovies">
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="Contract">Contract</label>
+                <select id="Contract" name="Contract">
+                    <option value="Month-to-month">Month-to-month</option>
+                    <option value="One year">One year</option>
+                    <option value="Two year">Two year</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="PaperlessBilling">Paperless Billing</label>
+                <select id="PaperlessBilling" name="PaperlessBilling">
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="PaymentMethod">Payment Method</label>
+                <select id="PaymentMethod" name="PaymentMethod">
+                    <option value="Electronic check">Electronic check</option>
+                    <option value="Mailed check">Mailed check</option>
+                    <option value="Bank transfer (automatic)">Bank transfer (automatic)</option>
+                    <option value="Credit card (automatic)">Credit card (automatic)</option>
+                </select>
+
+            <div class="form-group">
+                <label for="MonthlyCharges">Monthly Charges</label>
+                <input type="number" step="0.01" id="MonthlyCharges" name="MonthlyCharges" required />
+            </div>
+            <div class="form-group">
+                <label for="TotalCharges">Total Charges</label>
+                <input type="number" step="0.01" id="TotalCharges" name="TotalCharges" required />
+            </div>
+            <button type="submit">Predict</button>
+        </form>
+
+        <div class="loading" id="loading" style="display:none;">
+            <p>Processing...</p>
+        </div>
+
+        <div id="predictionResult"></div>
+    </div>
+
+  <!-- Previous HTML remains the same -->
+<script>
+    document.getElementById("jsonForm").addEventListener("submit", async function(event) {
+        event.preventDefault();
+        document.getElementById("loading").style.display = "block";
+        
+        let formData = new FormData(event.target);
+        let jsonData = {};
+    
+        // Convert form data to JSON (FIXED: removed SeniorCitizen conversion)
+        formData.forEach((value, key) => {
+            if (key === "MonthlyCharges" || key === "TotalCharges") {
+                jsonData[key] = parseFloat(value);
+            } else {
+                jsonData[key] = value;  // Send raw values for categorical features
+            }
+        });
+    
+        try {
+            const response = await fetch('/predict', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(jsonData),
+                credentials: 'include'  // Crucial for session cookies
+            });
+    
+            if (response.ok) {
+                window.location.href = '/result';  // Redirect to result page
+            }
+        } catch (error) {
+            document.getElementById("loading").style.display = "none";
+            document.getElementById("predictionResult").innerText = "Error submitting form";
+        }
+    });
+    </script>
+</body>
+</html>
+
