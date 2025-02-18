@@ -68,7 +68,7 @@
       async function getPrediction() {
         try {
           const response = await fetch("/get_prediction", {
-            credentials: "include", // Crucial for session cookies
+            credentials: "include", // Ensures session cookies are included
           });
 
           const data = await response.json();
@@ -76,9 +76,13 @@
 
           if (data.prediction) {
             resultElement.textContent = data.prediction;
-            resultElement.className = data.prediction.includes("churn")
-              ? "churn"
-              : "not-churn";
+
+            // Apply text color based on prediction
+            if (data.prediction.toLowerCase() === "churn") {
+              resultElement.style.color = "red"; // Red for churn
+            } else {
+              resultElement.style.color = "green"; // Green for not churn
+            }
           }
         } catch (error) {
           console.error("Error:", error);
