@@ -1,85 +1,57 @@
 import numpy as np
-from flask import Flask, request, jsonify, render_template, session
+import pandas as pd
+from flask import Flask,request,jsonify, render_template
 import pickle
-
+#create a flask app
 app = Flask(__name__)
-app.secret_key = 'your_secret_key_here'  # Required for sessions
 
-# Load model and encoders
-try:
-    model = pickle.load(open('ChurnModel.pkl', 'rb'))
-    encoder_dict = pickle.load(open('encoders.pkl', 'rb'))
-except Exception as e:
-    print(f"Error loading model or encoders: {e}")
+#load the pickle model
+model = pickle.load(open('ChurnModel.pkl', 'rb'))
+encoder_dict = pickle.load(open('encoders.pkl', 'rb'))
+scaler = pickle.load(open('scaler.pickle', 'rb'))  # Load the scaler
 
 @app.route("/")
 def home():
     return render_template("index.html")
 
-@app.route("/result")
-def result():
-    return render_template("result.html")
-
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
-        data = request.json
-        
-        # Remove customerID as it's not used in prediction
-        data.pop('customerID', None)
-        
+        data = request.json  # Receive input JSON
+        print("Received Data:", data)  # Debugging
+
         formatted_data = []
-        
-        # Define expected feature order based on model training
-        expected_features = [
-            'gender', 'SeniorCitizen', 'Partner', 'Dependents', 'tenure',
-            'PhoneService', 'MultipleLines', 'InternetService', 'OnlineSecurity',
-            'OnlineBackup', 'DeviceProtection', 'TechSupport', 'StreamingTV',
-            'StreamingMovies', 'Contract', 'PaperlessBilling', 'PaymentMethod',
-            'MonthlyCharges', 'TotalCharges'
-        ]
-        
-        # Convert SeniorCitizen from "Yes"/"No" to 1/0
-        if 'SeniorCitizen' in data:
-            data['SeniorCitizen'] = 1 if data['SeniorCitizen'] == 'Yes' else 0
-        
-        # Process features in correct order
-        for feature in expected_features:
-            value = data.get(feature)
-            
-            if feature in encoder_dict:
-                # Handle categorical feature encoding
-                try:
-                    encoded_value = encoder_dict[feature].transform([value])[0]
-                except ValueError as e:
-                    return jsonify({'error': f"Invalid value '{value}' for feature '{feature}'"}), 400
+
+        for column, value in data.items():
+            if column in encoder_dict:  # If the column needs encoding
+                encoded_value = encoder_dict[column].transform([value])[0]  # Apply LabelEncoder
                 formatted_data.append(encoded_value)
+            elif column in ['tenure', 'MonthlyCharges', 'TotalCharges']:  # Scale numeric values
+                formatted_data.append(float(value))  # Convert to float
             else:
-                # Handle numerical features
-                try:
-                    formatted_data.append(float(value))
-                except ValueError:
-                    return jsonify({'error': f"Invalid numerical value for '{feature}'"}), 400
-        
+                formatted_data.append(float(value))  # Convert other numerical values
+
+        # Scale numerical features
+        numeric_values = np.array([formatted_data[:3]])  # Extract tenure, MonthlyCharges, TotalCharges
+        scaled_values = scaler.transform(numeric_values)[0]  # Apply scaling
+
+        # Replace original values with scaled ones
+        formatted_data[:3] = scaled_values.tolist()
+
+        formatted_data = np.array([formatted_data])  # Convert to 2D array for the model
+        print("Formatted Data:", formatted_data)  # Debugging
+
         # Make prediction
-        prediction = model.predict(np.array([formatted_data]))[0]
-        session['prediction'] = "The customer will churn" if prediction == 1 else "The customer will not churn"
-        
-        return jsonify({'prediction': session['prediction']})
+        prediction = model.predict(formatted_data)[0]  # Get single prediction
+
+        # Convert numerical prediction to meaningful text
+        result_text = "The customer will churn" if prediction == 1 else "The customer will not churn"
+        print("Prediction Result:", result_text)  # Debugging
+
+        return jsonify({'prediction': result_text})
 
     except Exception as e:
-        print(f"Error during prediction: {str(e)}")  # Log error for debugging
+        print("Error:", str(e))  # Debugging
         return jsonify({'error': str(e)}), 400
-
-# ... (rest of the app remains the same)
-
-@app.route('/get_prediction')
-def get_prediction():
-    prediction = session.get('prediction', None)
-    if prediction:
-        return jsonify({'prediction': prediction})
-    return jsonify({'error': 'No prediction found'}), 404
-
 if __name__ == "__main__":
     app.run(debug=True)
-
