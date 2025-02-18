@@ -127,22 +127,22 @@ class RandomForest:
         self.n_trees = n_trees
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
-        self.max_features = max_features
+        self.max_features = max_features  # Set default in fit() if None
         self.trees = []
 
     def fit(self, X, y):
         self.trees = []
-        # Ensure X and y are NumPy arrays
         X = np.asarray(X)
         y = np.asarray(y)
         n_features = X.shape[1]
 
+        # Set max_features if not defined
         if self.max_features is None:
             self.max_features = int(np.sqrt(n_features))
 
         for _ in range(self.n_trees):
             X_sample, y_sample = self._bootstrap_sample(X, y)
-            tree = DecisionTree(
+            tree = DecisionTree(  # Assumes a custom DecisionTree class
                 max_depth=self.max_depth,
                 min_samples_split=self.min_samples_split,
                 max_features=self.max_features
@@ -151,17 +151,29 @@ class RandomForest:
             self.trees.append(tree)
 
     def _bootstrap_sample(self, X, y):
+        """Generates a bootstrap sample from the dataset."""
         n_samples = X.shape[0]
         idxs = np.random.choice(n_samples, n_samples, replace=True)
         return X[idxs], y[idxs]
 
     def predict(self, X):
-        # Convert X to NumPy array
+        """Predicts class labels using majority voting."""
         X = np.asarray(X)
-        tree_preds = np.array([tree.predict(X) for tree in self.trees])
-        tree_preds = np.swapaxes(tree_preds, 0, 1)
-        return np.array([self._most_common_label(preds) for preds in tree_preds])
+        tree_preds = np.array([tree.predict(X) for tree in self.trees])  # Get predictions from all trees
+        tree_preds = np.swapaxes(tree_preds, 0, 1)  # Transpose to shape (n_samples, n_trees)
+        return np.array([self._most_common_label(preds) for preds in tree_preds])  # Majority vote
 
     def _most_common_label(self, y):
+        """Returns the most common class label in an array."""
         counter = Counter(y)
         return counter.most_common(1)[0][0]
+
+    def predict_proba(self, X):
+        """Predicts class probabilities (needed for ROC AUC)."""
+        X = np.asarray(X)
+        tree_preds = np.array([tree.predict(X) for tree in self.trees])  # Collect predictions
+        tree_preds = np.swapaxes(tree_preds, 0, 1)  # (n_samples, n_trees)
+
+        # Convert predictions into probabilities
+        probs = np.mean(tree_preds, axis=1)  # Average over all trees
+        return np.vstack((1 - probs, probs)).T  # Return as (n_samples, 2) format
