@@ -3,7 +3,7 @@ import pandas as pd
 from flask import Flask, request, jsonify, render_template
 import pickle
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder="../templates")
 
 # Load model and preprocessing objects
 model = pickle.load(open('ChurnModel.pkl', 'rb'))
