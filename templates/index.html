@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Churn Prediction</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Arial, sans-serif;
+        margin: 20px;
+        padding: 20px;
+        background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+        min-height: 100vh;
+        color: #e0e0e0;
+      }
+      h1 {
+        text-align: center;
+        color: #ffffff;
+        margin-bottom: 30px;
+        font-size: 2.5em;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        position: relative;
+        padding-bottom: 10px;
+      }
+      h1:after {
+        content: "";
+        display: block;
+        width: 60px;
+        height: 3px;
+        background: #28a745;
+        margin: 15px auto 0;
+        border-radius: 2px;
+        box-shadow: 0 2px 8px rgba(40, 167, 69, 0.4);
+      }
+      form {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 30px;
+        background: #2d2d2d;
+        border-radius: 12px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+        column-count: 2;
+        column-gap: 30px;
+        break-inside: avoid;
+        position: relative;
+        border: 1px solid #404040;
+      }
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #d0d0d0;
+        font-size: 14px;
+      }
+      input,
+      select {
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 20px;
+        border: 2px solid #404040;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        font-size: 14px;
+        background: #1a1a1a;
+        color: #e0e0e0;
+      }
+      input:focus,
+      select:focus {
+        border-color: #28a745;
+        outline: none;
+        box-shadow: 0 0 12px rgba(40, 167, 69, 0.3);
+        background: #252525;
+      }
+      button {
+        width: 100%;
+        padding: 15px;
+        background: linear-gradient(135deg, #28a745, #1f7a34);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+        letter-spacing: 0.5px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        column-span: all;
+        margin-top: 15px;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+      }
+      button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 25px rgba(40, 167, 69, 0.4);
+        background: linear-gradient(135deg, #2fb84f, #218838);
+      }
+      #predictionResult {
+        margin: 30px auto;
+        padding: 20px;
+        max-width: 800px;
+        border-radius: 8px;
+        text-align: center;
+        font-size: 18px;
+        background: #2d2d2d;
+        box-shadow: 0 3px 15px rgba(0, 0, 0, 0.2);
+        border: 1px solid #404040;
+      }
+      .highlight {
+        animation: highlight 1.5s ease-in-out;
+      }
+      @keyframes highlight {
+        0% {
+          background-color: #2a4d2e;
+        }
+        100% {
+          background-color: transparent;
+        }
+      }
+      @media (max-width: 768px) {
+        form {
+          column-count: 1;
+        }
+        h1 {
+          font-size: 2em;
+        }
+        body {
+          padding: 15px;
+        }
+      }
+      ::placeholder {
+        color: #666;
+      }
+      option {
+        background: #2d2d2d;
+        color: #e0e0e0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Customer Churn Prediction</h1>
+    <form id="jsonForm">
+      <!-- Form Fields -->
+      <label for="gender">Gender:</label>
+      <select id="gender" name="gender">
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+      </select>
+
+      <label for="SeniorCitizen">Senior Citizen:</label>
+      <select id="SeniorCitizen" name="SeniorCitizen">
+        <option value="0">No</option>
+        <option value="1">Yes</option>
+      </select>
+
+      <label for="Partner">Partner:</label>
+      <select id="Partner" name="Partner">
+        <option value="Yes">Yes</option>
+        <option value="No">No</option>
+      </select>
+
+      <label for="Dependents">Dependents:</label>
+      <select id="Dependents" name="Dependents">
+        <option value="Yes">Yes</option>
+        <option value="No">No</option>
+      </select>
+
+      <label for="tenure">Tenure (months):</label>
+      <input type="number" id="tenure" name="tenure" min="0" required />
+
+      <label for="PhoneService">Phone Service:</label>
+      <select id="PhoneService" name="PhoneService">
+        <option value="Yes">Yes</option>
+        <option value="No">No</option>
+      </select>
+
+      <label for="MultipleLines">Multiple Lines:</label>
+      <select id="MultipleLines" name="MultipleLines">
+        <option value="Yes">Yes</option>
+        <option value="No">No</option>
+      </select>
+
+      <label for="InternetService">Internet Service:</label>
+      <select id="InternetService" name="InternetService">
+        <option value="DSL">DSL</option>
+        <option value="Fiber optic">Fiber optic</option>
+        <option value="No">No</option>
+      </select>
+
+      <label for="OnlineSecurity">Online Security:</label>
+      <select id="OnlineSecurity" name="OnlineSecurity">
+        <option value="Yes">Yes</option>
+        <option value="No">No</option>
+      </select>
+
+      <label for="OnlineBackup">Online Backup:</label>
+      <select id="OnlineBackup" name="OnlineBackup">
+        <option value="Yes">Yes</option>
+        <option value="No">No</option>
+      </select>
+
+      <label for="DeviceProtection">Device Protection:</label>
+      <select id="DeviceProtection" name="DeviceProtection">
+        <option value="Yes">Yes</option>
+        <option value="No">No</option>
+      </select>
+
+      <label for="TechSupport">Tech Support:</label>
+      <select id="TechSupport" name="TechSupport">
+        <option value="Yes">Yes</option>
+        <option value="No">No</option>
+      </select>
+
+      <label for="StreamingTV">Streaming TV:</label>
+      <select id="StreamingTV" name="StreamingTV">
+        <option value="Yes">Yes</option>
+        <option value="No">No</option>
+      </select>
+
+      <label for="StreamingMovies">Streaming Movies:</label>
+      <select id="StreamingMovies" name="StreamingMovies">
+        <option value="Yes">Yes</option>
+        <option value="No">No</option>
+      </select>
+
+      <label for="Contract">Contract:</label>
+      <select id="Contract" name="Contract">
+        <option value="Month-to-month">Month-to-month</option>
+        <option value="One year">One year</option>
+        <option value="Two year">Two year</option>
+      </select>
+
+      <label for="PaperlessBilling">Paperless Billing:</label>
+      <select id="PaperlessBilling" name="PaperlessBilling">
+        <option value="Yes">Yes</option>
+        <option value="No">No</option>
+      </select>
+
+      <label for="PaymentMethod">Payment Method:</label>
+      <select id="PaymentMethod" name="PaymentMethod">
+        <option value="Electronic check">Electronic check</option>
+        <option value="Mailed check">Mailed check</option>
+        <option value="Bank transfer (automatic)">
+          Bank transfer (automatic)
+        </option>
+        <option value="Credit card (automatic)">Credit card (automatic)</option>
+      </select>
+
+      <label for="MonthlyCharges">Monthly Charges:</label>
+      <input
+        type="number"
+        id="MonthlyCharges"
+        name="MonthlyCharges"
+        step="0.01"
+        required
+      />
+
+      <label for="TotalCharges">Total Charges:</label>
+      <input
+        type="number"
+        id="TotalCharges"
+        name="TotalCharges"
+        step="0.01"
+        required
+      />
+
+      <button type="submit">Predict Churn</button>
+    </form>
+
+    <div id="predictionResult"></div>
+
+    <script>
+      document
+        .getElementById("jsonForm")
+        .addEventListener("submit", async (event) => {
+          event.preventDefault();
+
+          // Form data mapping
+          const fieldMappings = {
+            gender: { type: "string" },
+            SeniorCitizen: { type: "int" },
+            Partner: { type: "string" },
+            Dependents: { type: "string" },
+            tenure: { type: "int" },
+            PhoneService: { type: "string" },
+            MultipleLines: { type: "string" },
+            InternetService: { type: "string" },
+            OnlineSecurity: { type: "string" },
+            OnlineBackup: { type: "string" },
+            DeviceProtection: { type: "string" },
+            TechSupport: { type: "string" },
+            StreamingTV: { type: "string" },
+            StreamingMovies: { type: "string" },
+            Contract: { type: "string" },
+            PaperlessBilling: { type: "string" },
+            PaymentMethod: { type: "string" },
+            MonthlyCharges: { type: "float" },
+            TotalCharges: { type: "float" },
+          };
+
+          // Build JSON payload
+          const payload = {};
+          for (const [field, config] of Object.entries(fieldMappings)) {
+            const element = document.getElementById(field);
+            if (!element) {
+              console.error(`Element not found: ${field}`);
+              continue;
+            }
+
+            let value = element.value;
+            if (config.type === "int") {
+              value = parseInt(value, 10);
+            } else if (config.type === "float") {
+              value = parseFloat(value);
+            }
+
+            payload[field] = value;
+          }
+
+          console.log("Submitting payload:", payload);
+
+          try {
+            const response = await fetch("/predict", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            });
+
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log("Response Data:", data);
+
+            if (typeof data.prediction === "undefined") {
+              throw new Error("Invalid response format from server");
+            }
+
+            // Display results
+            const resultDiv = document.getElementById("predictionResult");
+            resultDiv.textContent = `Churn Prediction: ${data.prediction}`;
+            resultDiv.style.color =
+              data.prediction === "churn" ? "#dc3545" : "#28a745";
+            resultDiv.classList.add("highlight");
+
+            setTimeout(() => {
+              resultDiv.classList.remove("highlight");
+            }, 1500);
+          } catch (error) {
+            console.error("Prediction Error:", error);
+            const resultDiv = document.getElementById("predictionResult");
+            resultDiv.textContent = `Error: ${error.message}`;
+            resultDiv.style.color = "#dc3545";
+          }
+        });
+    </script>
+  </body>
+</html>
