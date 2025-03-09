@@ -132,12 +132,27 @@
         background: #2d2d2d;
         color: #e0e0e0;
       }
+      select:disabled {
+        opacity: 0.7;
+        background: #333;
+      }
     </style>
   </head>
   <body>
     <h1>Customer Churn Prediction</h1>
     <form id="jsonForm">
-      <!-- Form Fields -->
+      <!-- Add Customer ID Field -->
+      <div class="dummy-field">
+        <label for="CustomerID">Customer ID (Demo Only):</label>
+        <input
+          type="text"
+          id="CustomerID"
+          pattern="CUST-\d{5}"
+          placeholder="CUST-12345"
+          title="Format: CUST- followed by 5 digits"
+        />
+      </div>
+
       <label for="gender">Gender:</label>
       <select id="gender" name="gender">
         <option value="Male">Male</option>
@@ -267,12 +282,54 @@
     <div id="predictionResult"></div>
 
     <script>
+      // Dynamic field dependencies
+      const phoneService = document.getElementById("PhoneService");
+      const internetService = document.getElementById("InternetService");
+      const multipleLines = document.getElementById("MultipleLines");
+      const dependentInternetFields = [
+        "OnlineSecurity",
+        "OnlineBackup",
+        "DeviceProtection",
+        "TechSupport",
+        "StreamingTV",
+        "StreamingMovies",
+      ];
+
+      phoneService.addEventListener("change", updatePhoneDependent);
+      internetService.addEventListener("change", updateInternetDependents);
+
+      function updatePhoneDependent() {
+        if (phoneService.value === "No") {
+          multipleLines.value = "No";
+          multipleLines.disabled = true;
+        } else {
+          multipleLines.disabled = false;
+        }
+      }
+
+      function updateInternetDependents() {
+        const isNoInternet = internetService.value === "No";
+        dependentInternetFields.forEach((fieldId) => {
+          const field = document.getElementById(fieldId);
+          if (isNoInternet) {
+            field.value = "No";
+            field.disabled = true;
+          } else {
+            field.disabled = false;
+          }
+        });
+      }
+
+      // Initialize form state
+      updatePhoneDependent();
+      updateInternetDependents();
+
+      // Form submission handler
       document
         .getElementById("jsonForm")
         .addEventListener("submit", async (event) => {
           event.preventDefault();
 
-          // Form data mapping
           const fieldMappings = {
             gender: { type: "string" },
             SeniorCitizen: { type: "int" },
@@ -295,14 +352,10 @@
             TotalCharges: { type: "float" },
           };
 
-          // Build JSON payload
           const payload = {};
           for (const [field, config] of Object.entries(fieldMappings)) {
             const element = document.getElementById(field);
-            if (!element) {
-              console.error(`Element not found: ${field}`);
-              continue;
-            }
+            if (!element) continue;
 
             let value = element.value;
             if (config.type === "int") {
@@ -310,11 +363,8 @@
             } else if (config.type === "float") {
               value = parseFloat(value);
             }
-
             payload[field] = value;
           }
-
-          console.log("Submitting payload:", payload);
 
           try {
             const response = await fetch("/predict", {
@@ -323,29 +373,19 @@
               body: JSON.stringify(payload),
             });
 
-            if (!response.ok) {
+            if (!response.ok)
               throw new Error(`HTTP error! status: ${response.status}`);
-            }
 
             const data = await response.json();
-            console.log("Response Data:", data);
-
-            if (typeof data.prediction === "undefined") {
-              throw new Error("Invalid response format from server");
-            }
-
-            // Display results
             const resultDiv = document.getElementById("predictionResult");
             resultDiv.textContent = `Churn Prediction: ${data.prediction}`;
             resultDiv.style.color =
               data.prediction === "churn" ? "#dc3545" : "#28a745";
             resultDiv.classList.add("highlight");
 
-            setTimeout(() => {
-              resultDiv.classList.remove("highlight");
-            }, 1500);
+            setTimeout(() => resultDiv.classList.remove("highlight"), 1500);
           } catch (error) {
-            console.error("Prediction Error:", error);
+            console.error("Error:", error);
             const resultDiv = document.getElementById("predictionResult");
             resultDiv.textContent = `Error: ${error.message}`;
             resultDiv.style.color = "#dc3545";
